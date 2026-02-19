@@ -15,6 +15,7 @@ from instagrapi import Client
 from instagrapi.exceptions import (
     BadPassword,
     CaptchaChallengeRequired,
+    ClientJSONDecodeError,
     ChallengeRequired,
     FeedbackRequired,
     LoginRequired,
@@ -117,8 +118,7 @@ class InstagramService:
                     pass
 
             sessionid = self._wait_for_session_cookie(driver, timeout_seconds)
-            self.client = Client()
-            self.client.login_by_sessionid(sessionid)
+            self._import_session_with_retry(sessionid=sessionid, retries=3, sleep_seconds=3)
             self.client.dump_settings(str(self.session_path))
             self.is_logged_in = True
         except InstagramServiceError:
@@ -251,13 +251,42 @@ class InstagramService:
     def _wait_for_session_cookie(self, driver, timeout_seconds: int) -> str:
         deadline = time.time() + timeout_seconds
         while time.time() < deadline:
-            cookie = driver.get_cookie("sessionid")
-            if cookie and cookie.get("value"):
-                return str(cookie["value"])
+            session_cookie = driver.get_cookie("sessionid")
+            user_cookie = driver.get_cookie("ds_user_id")
+            if (
+                session_cookie
+                and session_cookie.get("value")
+                and user_cookie
+                and user_cookie.get("value")
+            ):
+                return str(session_cookie["value"])
             time.sleep(2)
         raise InstagramServiceError(
-            "Browser login timeout. Complete login/challenge in Chrome, then retry."
+            "Browser login timeout. Complete login/challenge in Chrome until fully signed in, then retry."
         )
+
+    def _import_session_with_retry(self, sessionid: str, retries: int = 3, sleep_seconds: int = 3) -> None:
+        last_error: Exception | None = None
+        for attempt in range(1, retries + 1):
+            try:
+                self.client = Client()
+                self.client.login_by_sessionid(sessionid)
+                return
+            except (ClientJSONDecodeError, json.JSONDecodeError, ValueError) as exc:
+                last_error = exc
+                if attempt < retries:
+                    time.sleep(sleep_seconds)
+                    continue
+                break
+            except Exception as exc:
+                last_error = exc
+                break
+
+        if last_error:
+            raise InstagramServiceError(
+                "Browser login was completed, but Instagram API session import failed. "
+                "Wait 20-30 seconds and press Login again."
+            ) from last_error
 
     def _find_chrome_binary(self) -> str | None:
         for env_name in ("CHROME_PATH", "CHROME_BIN"):
