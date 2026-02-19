@@ -3,26 +3,25 @@
 [![Instagram](https://img.shields.io/badge/Instagram-pj.cy-E4405F?logo=instagram&logoColor=white)](https://instagram.com/pj.cy)
 
 ## English
-Desktop app that logs into Instagram, checks accounts you follow that do not follow you back, and lets you unfollow them while keeping followers.
+Desktop app to manage Instagram follow cleanup:
+- Login with API (`instagrapi`) or visible Chrome automation (`undetected-chromedriver + selenium`).
+- Detect accounts you follow that do not follow you back.
+- Unfollow selected users or all listed users.
+- Built-in error detector for login/challenge/rate-limit messages.
 
-### Features
-- Login with Instagram account.
-- Fetch `not_following_back` list.
-- Unfollow selected users.
-- Unfollow all users in the list.
-- Simple desktop GUI (Tkinter).
-- Build to Windows EXE with PyInstaller.
+### Chrome Requirement
+- Google Chrome must be installed.
+- Chrome language can be English or Arabic.
+- If Instagram shows "Are you a robot?" use `Chrome Login` in the app and complete the challenge manually in the opened browser.
 
 ### Project Files
 - `app.py`: GUI application.
-- `instagram_service.py`: Instagram API logic using `instagrapi`.
-- `build_exe.bat`: Build EXE.
-- `RELEASE_NOTES.md`: Release notes.
+- `instagram_service.py`: Instagram logic and Chrome login flow.
+- `assets/app_icon.ico`: App icon.
+- `build_exe.bat`: EXE build script.
+- `requirements.txt`: Python dependencies.
 - `LICENSE`: Proprietary license.
-
-### Requirements
-- Windows
-- Python 3.10+
+- `RELEASE_NOTES.md`: Release notes.
 
 ### Setup
 ```powershell
@@ -30,7 +29,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-### Run (Python)
+### Run
 ```powershell
 python app.py
 ```
@@ -40,7 +39,7 @@ python app.py
 .\build_exe.bat
 ```
 
-EXE output:
+Output:
 - `dist\InstagramCleaner.exe`
 
 ### Create Release Package
@@ -53,37 +52,26 @@ Copy-Item LICENSE release\v1.0.1\LICENSE -Force
 Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleaner-v1.0.1.zip -Force
 ```
 
-Release output:
-- `release\v1.0.1\InstagramCleaner.exe`
-- `release\InstagramCleaner-v1.0.1.zip`
-
-### Notes
-- Instagram may temporarily limit actions if too many unfollows are made quickly.
-- Use delay 2-4 seconds between unfollow actions for safer operation.
-- This tool uses your own credentials locally and stores session in `session.json`.
-- You are responsible for complying with Instagram Terms of Use.
-
 ## العربية
-تطبيق سطح مكتب يسجّل دخول إنستغرام، ويعرض الحسابات التي تتابعها لكنها لا تتابعك، ثم يسمح لك بإزالة متابعتها مع الإبقاء على من يتابعك.
+تطبيق سطح مكتب لإدارة تنظيف المتابعات في إنستغرام:
+- تسجيل دخول عبر API (`instagrapi`) أو عبر كروم ظاهر (`undetected-chromedriver + selenium`).
+- اكتشاف الحسابات التي تتابعها ولا تتابعك.
+- إلغاء متابعة حسابات محددة أو كل القائمة.
+- كاشف أخطاء داخل التطبيق يوضح حالة تسجيل الدخول والتحديات.
 
-### المميزات
-- تسجيل الدخول بحساب إنستغرام.
-- جلب قائمة `not_following_back`.
-- إزالة متابعة حسابات محددة.
-- إزالة متابعة كل الحسابات الموجودة في القائمة.
-- واجهة بسيطة (Tkinter).
-- تحويل التطبيق إلى ملف EXE على ويندوز عبر PyInstaller.
+### متطلب كروم
+- لازم يكون Google Chrome مثبت.
+- لغة كروم ممكن تكون عربي أو إنجليزي.
+- إذا ظهر لك "Are you a robot?" استخدم زر `Chrome Login` داخل التطبيق وكمل التحقق يدويًا داخل المتصفح المفتوح.
 
 ### ملفات المشروع
 - `app.py`: واجهة التطبيق.
-- `instagram_service.py`: منطق التعامل مع Instagram API باستخدام `instagrapi`.
-- `build_exe.bat`: بناء ملف EXE.
-- `RELEASE_NOTES.md`: ملاحظات الإصدار.
+- `instagram_service.py`: منطق إنستغرام ومسار تسجيل الدخول عبر كروم.
+- `assets/app_icon.ico`: أيقونة التطبيق.
+- `build_exe.bat`: سكربت بناء EXE.
+- `requirements.txt`: المكتبات المطلوبة.
 - `LICENSE`: ترخيص ملكية خاصة.
-
-### المتطلبات
-- نظام Windows
-- Python 3.10 أو أحدث
+- `RELEASE_NOTES.md`: ملاحظات الإصدار.
 
 ### التثبيت
 ```powershell
@@ -91,7 +79,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-### التشغيل (بايثون)
+### التشغيل
 ```powershell
 python app.py
 ```
@@ -101,10 +89,10 @@ python app.py
 .\build_exe.bat
 ```
 
-ناتج البناء:
+الناتج:
 - `dist\InstagramCleaner.exe`
 
-### إنشاء حزمة إصدار
+### تجهيز ملف Release
 ```powershell
 New-Item -ItemType Directory -Force -Path release\v1.0.1 | Out-Null
 Copy-Item dist\InstagramCleaner.exe release\v1.0.1\InstagramCleaner.exe -Force
@@ -114,12 +102,7 @@ Copy-Item LICENSE release\v1.0.1\LICENSE -Force
 Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleaner-v1.0.1.zip -Force
 ```
 
-ناتج الإصدار:
-- `release\v1.0.1\InstagramCleaner.exe`
-- `release\InstagramCleaner-v1.0.1.zip`
-
-### ملاحظات
-- قد يفرض إنستغرام قيودًا مؤقتة عند تنفيذ عدد كبير من عمليات إلغاء المتابعة بسرعة.
-- يفضل استخدام تأخير من 2 إلى 4 ثوانٍ بين كل عملية إلغاء متابعة.
-- يتم حفظ الجلسة محليًا في `session.json`.
-- أنت المسؤول عن الالتزام بشروط استخدام إنستغرام.
+## Notes
+- Instagram can temporarily rate-limit or challenge automated actions.
+- Keep delay around 2-5 seconds for safer unfollow operations.
+- You are responsible for compliance with Instagram Terms of Use.

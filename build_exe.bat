@@ -11,6 +11,10 @@ python -m PyInstaller ^
   --clean ^
   --onefile ^
   --windowed ^
+  --icon assets\app_icon.ico ^
+  --add-data "assets;assets" ^
+  --hidden-import selenium ^
+  --hidden-import undetected_chromedriver ^
   --name InstagramCleaner ^
   app.py
 

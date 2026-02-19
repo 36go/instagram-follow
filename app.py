@@ -1,5 +1,7 @@
 import threading
 from datetime import datetime
+from pathlib import Path
+import sys
 import tkinter as tk
 from tkinter import messagebox, ttk
 
@@ -21,19 +23,68 @@ class InstagramCleanerApp:
 
         self.username_var = tk.StringVar()
         self.password_var = tk.StringVar()
+        self.show_password_var = tk.BooleanVar(value=False)
         self.delay_var = tk.StringVar(value="2")
+        self.status_var = tk.StringVar(value="Status: Idle")
+        self.detector_var = tk.StringVar(value="Error Detector: No issues detected.")
 
+        self._apply_theme()
+        self._set_window_icon()
         self._build_ui()
+
+    def _apply_theme(self) -> None:
+        style = ttk.Style()
+        if "clam" in style.theme_names():
+            style.theme_use("clam")
+
+        self.root.configure(bg="#f3f6fb")
+        style.configure("TFrame", background="#f3f6fb")
+        style.configure("TLabelframe", background="#f3f6fb", bordercolor="#d8e0ee")
+        style.configure("TLabelframe.Label", background="#f3f6fb", foreground="#1f2d3d")
+        style.configure("TLabel", background="#f3f6fb", foreground="#1f2d3d")
+        style.configure(
+            "TButton",
+            padding=(10, 6),
+            background="#e9eef8",
+            foreground="#1b2a41",
+            bordercolor="#cfd8ea",
+        )
+        style.map(
+            "TButton",
+            background=[("active", "#dfe8f7"), ("pressed", "#d2dff4")],
+        )
+        style.configure("Accent.TButton", background="#4f7dff", foreground="white", bordercolor="#4f7dff")
+        style.map(
+            "Accent.TButton",
+            background=[("active", "#3f6ef3"), ("pressed", "#335fe0")],
+            foreground=[("disabled", "#eaf0ff")],
+        )
+        style.configure("TEntry", fieldbackground="white", bordercolor="#cad5eb")
+
+    def _set_window_icon(self) -> None:
+        icon_path = self._resource_path("assets/app_icon.ico")
+        if icon_path.exists():
+            try:
+                self.root.iconbitmap(default=str(icon_path))
+            except Exception:
+                pass
+
+    def _resource_path(self, relative_path: str) -> Path:
+        if hasattr(sys, "_MEIPASS"):
+            return Path(sys._MEIPASS) / relative_path
+        return Path(__file__).resolve().parent / relative_path
 
     def _build_ui(self) -> None:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(2, weight=1)
         self.root.rowconfigure(3, weight=1)
+        self.root.rowconfigure(4, weight=0)
 
         login_frame = ttk.LabelFrame(self.root, text="Instagram Login")
         login_frame.grid(row=0, column=0, padx=12, pady=(12, 8), sticky="ew")
         login_frame.columnconfigure(1, weight=1)
         login_frame.columnconfigure(3, weight=1)
+        login_frame.columnconfigure(4, weight=0)
 
         ttk.Label(login_frame, text="Username").grid(row=0, column=0, padx=6, pady=8, sticky="w")
         ttk.Entry(login_frame, textvariable=self.username_var).grid(
@@ -41,12 +92,27 @@ class InstagramCleanerApp:
         )
 
         ttk.Label(login_frame, text="Password").grid(row=0, column=2, padx=6, pady=8, sticky="w")
-        ttk.Entry(login_frame, textvariable=self.password_var, show="*").grid(
+        self.password_entry = ttk.Entry(login_frame, textvariable=self.password_var, show="*")
+        self.password_entry.grid(
             row=0, column=3, padx=6, pady=8, sticky="ew"
         )
 
-        self.login_button = ttk.Button(login_frame, text="Login", command=self.login)
-        self.login_button.grid(row=0, column=4, padx=6, pady=8)
+        self.toggle_password_button = ttk.Checkbutton(
+            login_frame,
+            text="Show",
+            variable=self.show_password_var,
+            command=self.toggle_password_visibility,
+        )
+        self.toggle_password_button.grid(row=0, column=4, padx=4, pady=8)
+
+        self.login_button = ttk.Button(login_frame, text="Login", style="Accent.TButton", command=self.login)
+        self.login_button.grid(row=0, column=5, padx=6, pady=8)
+        self.chrome_login_button = ttk.Button(
+            login_frame,
+            text="Chrome Login",
+            command=self.login_with_browser,
+        )
+        self.chrome_login_button.grid(row=0, column=6, padx=6, pady=8)
 
         action_frame = ttk.LabelFrame(self.root, text="Actions")
         action_frame.grid(row=1, column=0, padx=12, pady=(0, 8), sticky="ew")
@@ -78,7 +144,19 @@ class InstagramCleanerApp:
         list_frame.columnconfigure(0, weight=1)
         list_frame.rowconfigure(0, weight=1)
 
-        self.user_list = tk.Listbox(list_frame, selectmode=tk.EXTENDED)
+        self.user_list = tk.Listbox(
+            list_frame,
+            selectmode=tk.EXTENDED,
+            bg="white",
+            fg="#1f2d3d",
+            selectbackground="#4f7dff",
+            selectforeground="white",
+            borderwidth=0,
+            highlightthickness=1,
+            highlightbackground="#d5deef",
+            highlightcolor="#4f7dff",
+            activestyle="none",
+        )
         self.user_list.grid(row=0, column=0, sticky="nsew", padx=(8, 0), pady=8)
         list_scroll = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.user_list.yview)
         list_scroll.grid(row=0, column=1, sticky="ns", padx=(0, 8), pady=8)
@@ -89,13 +167,36 @@ class InstagramCleanerApp:
         log_frame.columnconfigure(0, weight=1)
         log_frame.rowconfigure(0, weight=1)
 
-        self.log_text = tk.Text(log_frame, state=tk.DISABLED, height=9)
+        self.log_text = tk.Text(
+            log_frame,
+            state=tk.DISABLED,
+            height=9,
+            bg="white",
+            fg="#1f2d3d",
+            borderwidth=0,
+            highlightthickness=1,
+            highlightbackground="#d5deef",
+            highlightcolor="#4f7dff",
+            insertbackground="#1f2d3d",
+        )
         self.log_text.grid(row=0, column=0, sticky="nsew", padx=(8, 0), pady=8)
         log_scroll = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
         log_scroll.grid(row=0, column=1, sticky="ns", padx=(0, 8), pady=8)
         self.log_text.configure(yscrollcommand=log_scroll.set)
 
+        detector_frame = ttk.LabelFrame(self.root, text="Error Detector")
+        detector_frame.grid(row=4, column=0, padx=12, pady=(0, 12), sticky="ew")
+        detector_frame.columnconfigure(0, weight=1)
+        self.status_label = ttk.Label(detector_frame, textvariable=self.status_var, foreground="#1f5faa")
+        self.status_label.grid(
+            row=0, column=0, padx=8, pady=(6, 2), sticky="w"
+        )
+        ttk.Label(detector_frame, textvariable=self.detector_var, wraplength=860).grid(
+            row=1, column=0, padx=8, pady=(0, 8), sticky="w"
+        )
+
         self.log("Application started. Enter your credentials and click Login.")
+        self._set_detector("INFO", "Ready to login.")
 
     def log(self, text: str) -> None:
         timestamp = datetime.now().strftime("%H:%M:%S")
@@ -110,9 +211,34 @@ class InstagramCleanerApp:
         self.unfollow_selected_button.configure(state=state)
         self.unfollow_all_button.configure(state=state)
 
+    def _set_login_buttons(self, enabled: bool) -> None:
+        state = tk.NORMAL if enabled else tk.DISABLED
+        self.login_button.configure(state=state)
+        self.chrome_login_button.configure(state=state)
+
     def _run_async(self, work) -> None:
         thread = threading.Thread(target=work, daemon=True)
         thread.start()
+
+    def _set_detector(self, level: str, message: str) -> None:
+        color_map = {
+            "SUCCESS": "#1f7a3f",
+            "WARNING": "#a85a00",
+            "ERROR": "#b42318",
+            "INFO": "#1f5faa",
+        }
+        self.status_var.set(f"Status: {level}")
+        self.detector_var.set(f"Error Detector: {message}")
+        level_color = color_map.get(level, "#1f5faa")
+        self.status_label.configure(foreground=level_color)
+
+    def toggle_password_visibility(self) -> None:
+        if self.show_password_var.get():
+            self.password_entry.configure(show="")
+            self.toggle_password_button.configure(text="Hide")
+        else:
+            self.password_entry.configure(show="*")
+            self.toggle_password_button.configure(text="Show")
 
     def login(self) -> None:
         username = self.username_var.get().strip()
@@ -121,8 +247,9 @@ class InstagramCleanerApp:
             messagebox.showerror(APP_TITLE, "Please enter username and password.")
             return
 
-        self.login_button.configure(state=tk.DISABLED)
+        self._set_login_buttons(False)
         self.log("Logging in...")
+        self._set_detector("INFO", "Trying to login...")
 
         def work() -> None:
             try:
@@ -135,15 +262,37 @@ class InstagramCleanerApp:
         self._run_async(work)
 
     def _on_login_success(self) -> None:
-        self.login_button.configure(state=tk.NORMAL)
+        self._set_login_buttons(True)
         self._set_action_buttons(True)
         self.log("Login successful.")
+        self._set_detector("SUCCESS", "Login successful. Session is active.")
         messagebox.showinfo(APP_TITLE, "Login successful.")
 
     def _on_login_failed(self, error_text: str) -> None:
-        self.login_button.configure(state=tk.NORMAL)
+        self._set_login_buttons(True)
         self.log(f"Login failed: {error_text}")
+        level = "WARNING" if ("challenge" in error_text.lower() or "captcha" in error_text.lower()) else "ERROR"
+        self._set_detector(level, error_text)
         messagebox.showerror(APP_TITLE, error_text)
+
+    def login_with_browser(self) -> None:
+        username = self.username_var.get().strip()
+        self._set_login_buttons(False)
+        self._set_detector(
+            "INFO",
+            "Launching Chrome. Complete Instagram login/challenge there, then wait for auto-detect.",
+        )
+        self.log("Launching visible Chrome login flow...")
+
+        def work() -> None:
+            try:
+                self.service.login_with_browser(username=username, timeout_seconds=300)
+            except InstagramServiceError as exc:
+                self.root.after(0, lambda: self._on_login_failed(str(exc)))
+                return
+            self.root.after(0, self._on_login_success)
+
+        self._run_async(work)
 
     def fetch_non_followers(self) -> None:
         self._set_action_buttons(False)
@@ -166,10 +315,12 @@ class InstagramCleanerApp:
             self.user_list.insert(tk.END, username)
         self._set_action_buttons(True)
         self.log(f"Found {len(users)} account(s) not following you back.")
+        self._set_detector("SUCCESS", f"Data loaded successfully. Found {len(users)} account(s).")
 
     def _on_fetch_failed(self, error_text: str) -> None:
         self._set_action_buttons(True)
         self.log(f"Failed to load accounts: {error_text}")
+        self._set_detector("ERROR", error_text)
         messagebox.showerror(APP_TITLE, error_text)
 
     def unfollow_selected(self) -> None:
@@ -233,13 +384,16 @@ class InstagramCleanerApp:
             f"Unfollow done. Removed: {len(result.get('removed', []))}, Failed: {len(result.get('failed', []))}."
         )
         if failed:
+            self._set_detector("WARNING", f"Completed with failures: {len(failed)}. Check log.")
             messagebox.showwarning(APP_TITLE, "Finished with some failures. Check log for details.")
         else:
+            self._set_detector("SUCCESS", "Unfollow completed with no errors.")
             messagebox.showinfo(APP_TITLE, "Finished successfully.")
 
     def _on_unfollow_failed(self, error_text: str) -> None:
         self._set_action_buttons(True)
         self.log(f"Unfollow failed: {error_text}")
+        self._set_detector("ERROR", error_text)
         messagebox.showerror(APP_TITLE, error_text)
 
     def _parse_delay(self) -> float | None:
@@ -256,9 +410,6 @@ class InstagramCleanerApp:
 
 def main() -> None:
     root = tk.Tk()
-    style = ttk.Style()
-    if "vista" in style.theme_names():
-        style.theme_use("vista")
     app = InstagramCleanerApp(root)
     root.mainloop()
 
