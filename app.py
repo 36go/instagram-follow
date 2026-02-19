@@ -1,5 +1,6 @@
 ﻿import threading
 from datetime import datetime
+import json
 from pathlib import Path
 import sys
 import tkinter as tk
@@ -9,6 +10,7 @@ from instagram_service import InstagramService, InstagramServiceError
 
 
 APP_TITLE = "Instagram Cleaner"
+SAVED_ACCOUNTS_FILE = Path("accounts.json")
 
 
 class InstagramCleanerApp:
@@ -21,9 +23,12 @@ class InstagramCleanerApp:
 
         self.service = InstagramService("session.json")
         self.non_followers: list[str] = []
+        self.last_scan_counts = {"following": 0, "followers": 0}
 
+        self.saved_accounts = self._load_saved_accounts()
         self.username_var = tk.StringVar()
-        self.delay_var = tk.StringVar(value="2")
+        self.saved_account_var = tk.StringVar(value=self.saved_accounts[0] if self.saved_accounts else "")
+        self.delay_var = tk.StringVar(value="0.8")
         self.status_var = tk.StringVar(value="Status: Idle")
         self.detector_var = tk.StringVar(value="Error Detector: No issues detected.")
 
@@ -73,6 +78,72 @@ class InstagramCleanerApp:
             return Path(sys._MEIPASS) / relative_path
         return Path(__file__).resolve().parent / relative_path
 
+    def _load_saved_accounts(self) -> list[str]:
+        if not SAVED_ACCOUNTS_FILE.exists():
+            return []
+        try:
+            data = json.loads(SAVED_ACCOUNTS_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        if not isinstance(data, list):
+            return []
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for entry in data:
+            if not isinstance(entry, str):
+                continue
+            username = entry.strip().lstrip("@")
+            if not username:
+                continue
+            lowered = username.lower()
+            if lowered in seen:
+                continue
+            seen.add(lowered)
+            cleaned.append(username)
+        return cleaned
+
+    def _save_saved_accounts(self) -> None:
+        try:
+            SAVED_ACCOUNTS_FILE.write_text(
+                json.dumps(self.saved_accounts, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
+
+    def _refresh_saved_accounts_ui(self) -> None:
+        values = list(self.saved_accounts)
+        self.saved_accounts_combo.configure(values=values)
+        current = self.saved_account_var.get().strip()
+        if values:
+            if not current or current not in values:
+                self.saved_account_var.set(values[0])
+        else:
+            self.saved_account_var.set("")
+
+    def _remember_account(self, username: str) -> None:
+        account = username.strip().lstrip("@")
+        if not account:
+            return
+        existing = [item for item in self.saved_accounts if item.lower() != account.lower()]
+        self.saved_accounts = [account] + existing
+        self.saved_accounts = self.saved_accounts[:20]
+        self._save_saved_accounts()
+        self._refresh_saved_accounts_ui()
+
+    def use_selected_account(self) -> None:
+        selected = self.saved_account_var.get().strip()
+        if selected:
+            self.username_var.set(selected)
+
+    def remove_selected_account(self) -> None:
+        selected = self.saved_account_var.get().strip()
+        if not selected:
+            return
+        self.saved_accounts = [item for item in self.saved_accounts if item.lower() != selected.lower()]
+        self._save_saved_accounts()
+        self._refresh_saved_accounts_ui()
+
     def _build_ui(self) -> None:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(2, weight=1)
@@ -83,19 +154,41 @@ class InstagramCleanerApp:
         login_frame.grid(row=0, column=0, padx=12, pady=(12, 8), sticky="ew")
         login_frame.columnconfigure(1, weight=1)
 
-        ttk.Label(login_frame, text="Username (optional)").grid(row=0, column=0, padx=6, pady=8, sticky="w")
+        ttk.Label(login_frame, text="Username (for account profile)").grid(row=0, column=0, padx=6, pady=8, sticky="w")
         ttk.Entry(login_frame, textvariable=self.username_var).grid(
             row=0, column=1, padx=6, pady=8, sticky="ew"
         )
 
+        self.login_button = ttk.Button(login_frame, text="Login", style="Accent.TButton", command=self.login)
+        self.login_button.grid(row=0, column=2, padx=6, pady=8)
+
+        self.login_other_button = ttk.Button(
+            login_frame,
+            text="Login Another",
+            command=self.login_another_account,
+        )
+        self.login_other_button.grid(row=0, column=3, padx=6, pady=8)
+
         ttk.Label(
             login_frame,
-            text="Login opens Chrome. Complete sign-in there.",
+            text="Type/select account, then login. Each account gets its own Chrome profile.",
             foreground="#53627a",
-        ).grid(row=0, column=2, padx=8, pady=8, sticky="w")
+        ).grid(row=1, column=1, columnspan=3, padx=8, pady=(2, 8), sticky="w")
 
-        self.login_button = ttk.Button(login_frame, text="Login", style="Accent.TButton", command=self.login)
-        self.login_button.grid(row=0, column=3, padx=6, pady=8)
+        ttk.Label(login_frame, text="Saved accounts").grid(row=2, column=0, padx=6, pady=8, sticky="w")
+        self.saved_accounts_combo = ttk.Combobox(
+            login_frame,
+            textvariable=self.saved_account_var,
+            state="readonly",
+            values=self.saved_accounts,
+        )
+        self.saved_accounts_combo.grid(row=2, column=1, padx=6, pady=8, sticky="ew")
+        ttk.Button(login_frame, text="Use", command=self.use_selected_account).grid(
+            row=2, column=2, padx=6, pady=8
+        )
+        ttk.Button(login_frame, text="Remove", command=self.remove_selected_account).grid(
+            row=2, column=3, padx=6, pady=8
+        )
 
         action_frame = ttk.LabelFrame(self.root, text="Actions")
         action_frame.grid(row=1, column=0, padx=12, pady=(0, 8), sticky="ew")
@@ -127,7 +220,7 @@ class InstagramCleanerApp:
 
         ttk.Label(action_frame, text="Delay (sec)").grid(row=0, column=3, padx=(18, 4), pady=8)
         ttk.Entry(action_frame, textvariable=self.delay_var, width=6).grid(row=0, column=4, padx=4, pady=8)
-        ttk.Label(action_frame, text="Use 2-4 seconds to reduce rate-limit risk.").grid(
+        ttk.Label(action_frame, text="Use 0.3-1.5 seconds for faster flow (higher risk).").grid(
             row=0, column=5, padx=8, pady=8, sticky="w"
         )
 
@@ -185,6 +278,7 @@ class InstagramCleanerApp:
             row=1, column=0, padx=8, pady=(0, 8), sticky="w"
         )
 
+        self._refresh_saved_accounts_ui()
         self.log("Application started. Click Login to open Chrome and sign in.")
         self._set_detector("INFO", "Ready to login.")
 
@@ -204,6 +298,7 @@ class InstagramCleanerApp:
     def _set_login_buttons(self, enabled: bool) -> None:
         state = tk.NORMAL if enabled else tk.DISABLED
         self.login_button.configure(state=state)
+        self.login_other_button.configure(state=state)
 
     def _run_async(self, work) -> None:
         thread = threading.Thread(target=work, daemon=True)
@@ -222,12 +317,21 @@ class InstagramCleanerApp:
         self.status_label.configure(foreground=level_color)
 
     def login(self) -> None:
-        self.login_with_browser()
+        self.login_with_browser(force_new=False)
+
+    def login_another_account(self) -> None:
+        self.login_with_browser(force_new=True)
 
     def _on_login_success(self, auto_scan: bool = False) -> None:
         self._set_login_buttons(True)
         self._set_action_buttons(True)
-        self.log("Login successful.")
+        active_username = (self.service.username or "").strip().lstrip("@")
+        if active_username:
+            self.username_var.set(active_username)
+            self._remember_account(active_username)
+            self.log(f"Login successful as @{active_username}.")
+        else:
+            self.log("Login successful.")
         if auto_scan:
             self._set_detector("INFO", "Login successful. Starting account scan automatically...")
             self.fetch_non_followers()
@@ -241,18 +345,28 @@ class InstagramCleanerApp:
         self._set_detector(level, error_text)
         messagebox.showerror(APP_TITLE, error_text)
 
-    def login_with_browser(self) -> None:
+    def login_with_browser(self, force_new: bool = False) -> None:
         username = self.username_var.get().strip()
+        if not username:
+            username = self.saved_account_var.get().strip()
+
         self._set_login_buttons(False)
         self._set_detector(
             "INFO",
             "Launching Chrome. Complete Instagram login/challenge there, then wait for auto-detect.",
         )
-        self.log("Launching visible Chrome login flow...")
+        if force_new:
+            self.log("Launching Chrome login flow for another account...")
+        else:
+            self.log("Launching visible Chrome login flow...")
 
         def work() -> None:
             try:
-                self.service.login_with_browser(username=username, timeout_seconds=300)
+                self.service.login_with_browser(
+                    username=username,
+                    timeout_seconds=300,
+                    force_new=force_new,
+                )
             except InstagramServiceError as exc:
                 self.root.after(0, lambda: self._on_login_failed(str(exc)))
                 return
@@ -263,10 +377,56 @@ class InstagramCleanerApp:
     def fetch_non_followers(self) -> None:
         self._set_action_buttons(False)
         self.log("Loading accounts. This may take some time for large accounts...")
+        self.last_scan_counts = {"following": 0, "followers": 0}
+        scan_progress = {"following": -1, "followers": -1}
+        scan_completed: set[str] = set()
+
+        def scan_update(relation: str, count: int) -> None:
+            if relation not in scan_progress:
+                return
+            relation_key = relation
+            label = "following" if relation_key == "following" else "followers"
+            previous = scan_progress.get(relation_key, -1)
+
+            if count < 0:
+                return
+
+            if previous < 0:
+                scan_progress[relation_key] = count
+                self.last_scan_counts[relation_key] = count
+                self.root.after(
+                    0,
+                    lambda label=label, count=count: self.log(
+                        f"Scanning {label}: {count} account(s) loaded..."
+                    ),
+                )
+                return
+
+            if count > previous:
+                scan_progress[relation_key] = count
+                self.last_scan_counts[relation_key] = count
+                if count <= 50 or (count - previous) >= 5:
+                    self.root.after(
+                        0,
+                        lambda label=label, count=count: self.log(
+                            f"Scanning {label}: {count} account(s) loaded..."
+                        ),
+                    )
+                return
+
+            if count == previous and relation_key not in scan_completed:
+                scan_completed.add(relation_key)
+                self.last_scan_counts[relation_key] = count
+                self.root.after(
+                    0,
+                    lambda label=label, count=count: self.log(
+                        f"Finished scanning {label}: {count} account(s)."
+                    ),
+                )
 
         def work() -> None:
             try:
-                users = self.service.get_not_following_back()
+                users = self.service.get_not_following_back(progress_callback=scan_update)
             except InstagramServiceError as exc:
                 self.root.after(0, lambda: self._on_fetch_failed(str(exc)))
                 return
@@ -280,6 +440,11 @@ class InstagramCleanerApp:
         for username in users:
             self.user_list.insert(tk.END, username)
         self._set_action_buttons(True)
+        self.log(
+            "Scan totals: "
+            f"following={self.last_scan_counts.get('following', 0)}, "
+            f"followers={self.last_scan_counts.get('followers', 0)}."
+        )
         self.log(f"Found {len(users)} account(s) not following you back.")
         self._set_detector("SUCCESS", f"Data loaded successfully. Found {len(users)} account(s).")
 
@@ -320,7 +485,10 @@ class InstagramCleanerApp:
         def progress(done: int, total: int, username: str, success: bool, error: str) -> None:
             def update_log() -> None:
                 if success:
-                    self.log(f"{done}/{total} unfollowed @{username}")
+                    if error:
+                        self.log(f"{done}/{total} skipped @{username}: {error}")
+                    else:
+                        self.log(f"{done}/{total} unfollowed @{username}")
                 else:
                     self.log(f"{done}/{total} failed @{username}: {error}")
 
@@ -338,22 +506,30 @@ class InstagramCleanerApp:
 
     def _on_unfollow_finished(self, result: dict[str, list[str]]) -> None:
         removed = set(result.get("removed", []))
+        skipped = set(result.get("skipped", []))
         failed = result.get("failed", [])
-        if removed:
-            self.non_followers = [username for username in self.non_followers if username not in removed]
+        processed = removed | skipped
+        if processed:
+            self.non_followers = [username for username in self.non_followers if username not in processed]
             self.user_list.delete(0, tk.END)
             for username in self.non_followers:
                 self.user_list.insert(tk.END, username)
 
         self._set_action_buttons(True)
         self.log(
-            f"Unfollow done. Removed: {len(result.get('removed', []))}, Failed: {len(result.get('failed', []))}."
+            "Unfollow done. "
+            f"Removed: {len(result.get('removed', []))}, "
+            f"Skipped: {len(result.get('skipped', []))}, "
+            f"Failed: {len(result.get('failed', []))}."
         )
         if failed:
             self._set_detector("WARNING", f"Completed with failures: {len(failed)}. Check log.")
             messagebox.showwarning(APP_TITLE, "Finished with some failures. Check log for details.")
         else:
-            self._set_detector("SUCCESS", "Unfollow completed with no errors.")
+            self._set_detector(
+                "SUCCESS",
+                f"Unfollow completed. Removed: {len(result.get('removed', []))}, Skipped: {len(result.get('skipped', []))}.",
+            )
             messagebox.showinfo(APP_TITLE, "Finished successfully.")
 
     def _on_unfollow_failed(self, error_text: str) -> None:
@@ -368,8 +544,8 @@ class InstagramCleanerApp:
         except ValueError:
             messagebox.showerror(APP_TITLE, "Delay must be a number.")
             return None
-        if delay < 0.5:
-            messagebox.showerror(APP_TITLE, "Delay must be at least 0.5 seconds.")
+        if delay < 0.2:
+            messagebox.showerror(APP_TITLE, "Delay must be at least 0.2 seconds.")
             return None
         return delay
 

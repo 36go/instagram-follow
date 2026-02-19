@@ -12,6 +12,8 @@ release/
 
 # Local app data
 session.json
+chrome_profile/
+chrome_profiles/
 
 # IDE
 .idea/
