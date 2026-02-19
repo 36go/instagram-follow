@@ -1,29 +1,25 @@
-# Instagram Cleaner (Python + EXE)
+﻿# Instagram Cleaner (Python + EXE)
 
 [![Instagram](https://img.shields.io/badge/Instagram-pj.cy-E4405F?logo=instagram&logoColor=white)](https://instagram.com/pj.cy)
 
 ## English
-Desktop app to manage Instagram follow cleanup:
-- Login with API (`instagrapi`) by default, or use visible Chrome automation (`undetected-chromedriver + selenium`) when needed.
+Desktop app for Instagram follow cleanup.
+
+### Current Login Flow
+- The `Login` button opens a visible Chrome window.
+- You sign in manually inside Instagram in Chrome.
+- After successful sign-in, the app imports session and automatically starts counting accounts that do not follow you back.
+
+### Features
+- Browser-based login (Chrome) for better challenge handling.
 - Detect accounts you follow that do not follow you back.
 - Unfollow selected users or all listed users.
-- Built-in error detector for login/challenge/rate-limit messages.
+- In-app error detector for challenge/rate-limit/login problems.
 
-### Chrome Requirement
-- Google Chrome must be installed.
-- Chrome language can be English or Arabic.
-- `Chrome Login` is optional, not mandatory.
-- If Instagram shows "Are you a robot?" use `Chrome Login` in the app and complete the challenge manually in the opened browser.
-- If Instagram requests a verification/activation code, the app now prompts you to enter the code directly.
-
-### Project Files
-- `app.py`: GUI application.
-- `instagram_service.py`: Instagram logic and Chrome login flow.
-- `assets/app_icon.ico`: App icon.
-- `build_exe.bat`: EXE build script.
-- `requirements.txt`: Python dependencies.
-- `LICENSE`: Proprietary license.
-- `RELEASE_NOTES.md`: Release notes.
+### Requirements
+- Windows
+- Python 3.10+
+- Google Chrome installed (Arabic or English UI both supported)
 
 ### Setup
 ```powershell
@@ -46,36 +42,32 @@ Output:
 
 ### Create Release Package
 ```powershell
-New-Item -ItemType Directory -Force -Path release\v1.0.3 | Out-Null
-Copy-Item dist\InstagramCleaner.exe release\v1.0.3\InstagramCleaner.exe -Force
-Copy-Item README.md release\v1.0.3\README.md -Force
-Copy-Item RELEASE_NOTES.md release\v1.0.3\RELEASE_NOTES.md -Force
-Copy-Item LICENSE release\v1.0.3\LICENSE -Force
-Compress-Archive -Path release\v1.0.3\* -DestinationPath release\InstagramCleaner-v1.0.3.zip -Force
+New-Item -ItemType Directory -Force -Path release\v1.0.4 | Out-Null
+Copy-Item dist\InstagramCleaner.exe release\v1.0.4\InstagramCleaner.exe -Force
+Copy-Item README.md release\v1.0.4\README.md -Force
+Copy-Item RELEASE_NOTES.md release\v1.0.4\RELEASE_NOTES.md -Force
+Copy-Item LICENSE release\v1.0.4\LICENSE -Force
+Compress-Archive -Path release\v1.0.4\* -DestinationPath release\InstagramCleaner-v1.0.4.zip -Force
 ```
 
 ## العربية
-تطبيق سطح مكتب لإدارة تنظيف المتابعات في إنستغرام:
-- تسجيل دخول أساسي عبر API (`instagrapi`)، ومع خيار إضافي عبر كروم ظاهر (`undetected-chromedriver + selenium`) عند الحاجة.
+تطبيق سطح مكتب لتنظيف المتابعات في إنستغرام.
+
+### طريقة تسجيل الدخول الحالية
+- زر `Login` هو نفسه الذي يفتح متصفح Chrome بشكل ظاهر.
+- المستخدم يسجل الدخول يدويًا داخل إنستغرام من Chrome.
+- بعد نجاح الدخول، التطبيق يأخذ الجلسة تلقائيًا ويبدأ مباشرة عدّ الحسابات التي لا تتابعك.
+
+### المميزات
+- تسجيل دخول عبر Chrome للتعامل الأفضل مع التحديات.
 - اكتشاف الحسابات التي تتابعها ولا تتابعك.
-- إلغاء متابعة حسابات محددة أو كل القائمة.
-- كاشف أخطاء داخل التطبيق يوضح حالة تسجيل الدخول والتحديات.
+- إلغاء متابعة حسابات محددة أو كل الحسابات في القائمة.
+- كاشف أخطاء داخل التطبيق لحالات التحدي أو تقييد إنستغرام.
 
-### متطلب كروم
-- لازم يكون Google Chrome مثبت.
-- لغة كروم ممكن تكون عربي أو إنجليزي.
-- `Chrome Login` خيار إضافي وليس إجباري.
-- إذا ظهر لك "Are you a robot?" استخدم زر `Chrome Login` داخل التطبيق وكمل التحقق يدويًا داخل المتصفح المفتوح.
-- إذا طلب إنستغرام كود تفعيل/تحقق، التطبيق سيطلب منك إدخال الكود مباشرة.
-
-### ملفات المشروع
-- `app.py`: واجهة التطبيق.
-- `instagram_service.py`: منطق إنستغرام ومسار تسجيل الدخول عبر كروم.
-- `assets/app_icon.ico`: أيقونة التطبيق.
-- `build_exe.bat`: سكربت بناء EXE.
-- `requirements.txt`: المكتبات المطلوبة.
-- `LICENSE`: ترخيص ملكية خاصة.
-- `RELEASE_NOTES.md`: ملاحظات الإصدار.
+### المتطلبات
+- Windows
+- Python 3.10 أو أحدث
+- وجود Google Chrome (سواء عربي أو إنجليزي)
 
 ### التثبيت
 ```powershell
@@ -98,15 +90,15 @@ python app.py
 
 ### تجهيز ملف Release
 ```powershell
-New-Item -ItemType Directory -Force -Path release\v1.0.3 | Out-Null
-Copy-Item dist\InstagramCleaner.exe release\v1.0.3\InstagramCleaner.exe -Force
-Copy-Item README.md release\v1.0.3\README.md -Force
-Copy-Item RELEASE_NOTES.md release\v1.0.3\RELEASE_NOTES.md -Force
-Copy-Item LICENSE release\v1.0.3\LICENSE -Force
-Compress-Archive -Path release\v1.0.3\* -DestinationPath release\InstagramCleaner-v1.0.3.zip -Force
+New-Item -ItemType Directory -Force -Path release\v1.0.4 | Out-Null
+Copy-Item dist\InstagramCleaner.exe release\v1.0.4\InstagramCleaner.exe -Force
+Copy-Item README.md release\v1.0.4\README.md -Force
+Copy-Item RELEASE_NOTES.md release\v1.0.4\RELEASE_NOTES.md -Force
+Copy-Item LICENSE release\v1.0.4\LICENSE -Force
+Compress-Archive -Path release\v1.0.4\* -DestinationPath release\InstagramCleaner-v1.0.4.zip -Force
 ```
 
 ## Notes
-- Instagram can temporarily rate-limit or challenge automated actions.
-- Keep delay around 2-5 seconds for safer unfollow operations.
+- Instagram can challenge or rate-limit aggressive actions.
+- Keep unfollow delay around 2-5 seconds.
 - You are responsible for compliance with Instagram Terms of Use.

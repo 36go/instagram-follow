@@ -1,21 +1,13 @@
-# Release v1.0.3
+﻿# Release v1.0.4
 
 ## Added
-- Desktop GUI app to login to Instagram.
-- Detect accounts you follow that do not follow you back.
-- Unfollow selected users or all listed users.
-- Local session reuse (`session.json`) to reduce repeated login prompts.
-- Windows EXE build pipeline via PyInstaller.
-- Visible Chrome login mode using `undetected-chromedriver + selenium`.
-- Session import from browser login to continue actions in the app.
-- Login error detector enhancements for captcha/challenge/rate-limit cases.
-- In-app verification code prompt when Instagram requests activation/2FA code.
+- Login button now opens visible Chrome login flow directly.
+- Automatic scan starts right after browser login success.
+- Browser-first login UX to handle challenge/captcha flows better.
 
 ## Changed
-- Updated README to include both English and Arabic documentation.
-- Updated license to proprietary copyright terms for `@pj.cy`.
-- Release package now includes `LICENSE`.
-- Clarified that Chrome login is optional and used only when needed.
+- Removed separate Chrome Login button from UI.
+- README updated (Arabic + English) with the new login behavior.
 
 ## Artifacts
 - `InstagramCleaner.exe`

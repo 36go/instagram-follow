@@ -1,11 +1,11 @@
-import threading
+﻿import threading
 from datetime import datetime
 from pathlib import Path
 import sys
 import tkinter as tk
-from tkinter import messagebox, simpledialog, ttk
+from tkinter import messagebox, ttk
 
-from instagram_service import InstagramService, InstagramServiceError, VerificationCodeRequired
+from instagram_service import InstagramService, InstagramServiceError
 
 
 APP_TITLE = "Instagram Cleaner"
@@ -22,8 +22,6 @@ class InstagramCleanerApp:
         self.non_followers: list[str] = []
 
         self.username_var = tk.StringVar()
-        self.password_var = tk.StringVar()
-        self.show_password_var = tk.BooleanVar(value=False)
         self.delay_var = tk.StringVar(value="2")
         self.status_var = tk.StringVar(value="Status: Idle")
         self.detector_var = tk.StringVar(value="Error Detector: No issues detected.")
@@ -83,53 +81,46 @@ class InstagramCleanerApp:
         login_frame = ttk.LabelFrame(self.root, text="Instagram Login")
         login_frame.grid(row=0, column=0, padx=12, pady=(12, 8), sticky="ew")
         login_frame.columnconfigure(1, weight=1)
-        login_frame.columnconfigure(3, weight=1)
-        login_frame.columnconfigure(4, weight=0)
 
-        ttk.Label(login_frame, text="Username").grid(row=0, column=0, padx=6, pady=8, sticky="w")
+        ttk.Label(login_frame, text="Username (optional)").grid(row=0, column=0, padx=6, pady=8, sticky="w")
         ttk.Entry(login_frame, textvariable=self.username_var).grid(
             row=0, column=1, padx=6, pady=8, sticky="ew"
         )
 
-        ttk.Label(login_frame, text="Password").grid(row=0, column=2, padx=6, pady=8, sticky="w")
-        self.password_entry = ttk.Entry(login_frame, textvariable=self.password_var, show="*")
-        self.password_entry.grid(
-            row=0, column=3, padx=6, pady=8, sticky="ew"
-        )
-
-        self.toggle_password_button = ttk.Checkbutton(
+        ttk.Label(
             login_frame,
-            text="Show",
-            variable=self.show_password_var,
-            command=self.toggle_password_visibility,
-        )
-        self.toggle_password_button.grid(row=0, column=4, padx=4, pady=8)
+            text="Login opens Chrome. Complete sign-in there.",
+            foreground="#53627a",
+        ).grid(row=0, column=2, padx=8, pady=8, sticky="w")
 
         self.login_button = ttk.Button(login_frame, text="Login", style="Accent.TButton", command=self.login)
-        self.login_button.grid(row=0, column=5, padx=6, pady=8)
-        self.chrome_login_button = ttk.Button(
-            login_frame,
-            text="Chrome Login",
-            command=self.login_with_browser,
-        )
-        self.chrome_login_button.grid(row=0, column=6, padx=6, pady=8)
+        self.login_button.grid(row=0, column=3, padx=6, pady=8)
 
         action_frame = ttk.LabelFrame(self.root, text="Actions")
         action_frame.grid(row=1, column=0, padx=12, pady=(0, 8), sticky="ew")
         action_frame.columnconfigure(5, weight=1)
 
         self.fetch_button = ttk.Button(
-            action_frame, text="Find People Not Following Back", command=self.fetch_non_followers, state=tk.DISABLED
+            action_frame,
+            text="Find People Not Following Back",
+            command=self.fetch_non_followers,
+            state=tk.DISABLED,
         )
         self.fetch_button.grid(row=0, column=0, padx=6, pady=8)
 
         self.unfollow_selected_button = ttk.Button(
-            action_frame, text="Unfollow Selected", command=self.unfollow_selected, state=tk.DISABLED
+            action_frame,
+            text="Unfollow Selected",
+            command=self.unfollow_selected,
+            state=tk.DISABLED,
         )
         self.unfollow_selected_button.grid(row=0, column=1, padx=6, pady=8)
 
         self.unfollow_all_button = ttk.Button(
-            action_frame, text="Unfollow All Listed", command=self.unfollow_all, state=tk.DISABLED
+            action_frame,
+            text="Unfollow All Listed",
+            command=self.unfollow_all,
+            state=tk.DISABLED,
         )
         self.unfollow_all_button.grid(row=0, column=2, padx=6, pady=8)
 
@@ -188,14 +179,12 @@ class InstagramCleanerApp:
         detector_frame.grid(row=4, column=0, padx=12, pady=(0, 12), sticky="ew")
         detector_frame.columnconfigure(0, weight=1)
         self.status_label = ttk.Label(detector_frame, textvariable=self.status_var, foreground="#1f5faa")
-        self.status_label.grid(
-            row=0, column=0, padx=8, pady=(6, 2), sticky="w"
-        )
+        self.status_label.grid(row=0, column=0, padx=8, pady=(6, 2), sticky="w")
         ttk.Label(detector_frame, textvariable=self.detector_var, wraplength=860).grid(
             row=1, column=0, padx=8, pady=(0, 8), sticky="w"
         )
 
-        self.log("Application started. Enter your credentials and click Login.")
+        self.log("Application started. Click Login to open Chrome and sign in.")
         self._set_detector("INFO", "Ready to login.")
 
     def log(self, text: str) -> None:
@@ -214,7 +203,6 @@ class InstagramCleanerApp:
     def _set_login_buttons(self, enabled: bool) -> None:
         state = tk.NORMAL if enabled else tk.DISABLED
         self.login_button.configure(state=state)
-        self.chrome_login_button.configure(state=state)
 
     def _run_async(self, work) -> None:
         thread = threading.Thread(target=work, daemon=True)
@@ -232,66 +220,18 @@ class InstagramCleanerApp:
         level_color = color_map.get(level, "#1f5faa")
         self.status_label.configure(foreground=level_color)
 
-    def toggle_password_visibility(self) -> None:
-        if self.show_password_var.get():
-            self.password_entry.configure(show="")
-            self.toggle_password_button.configure(text="Hide")
-        else:
-            self.password_entry.configure(show="*")
-            self.toggle_password_button.configure(text="Show")
-
     def login(self) -> None:
-        username = self.username_var.get().strip()
-        password = self.password_var.get().strip()
-        if not username or not password:
-            messagebox.showerror(APP_TITLE, "Please enter username and password.")
-            return
+        self.login_with_browser()
 
-        self._start_login_flow(username, password)
-
-    def _start_login_flow(self, username: str, password: str, verification_code: str = "") -> None:
-        self._set_login_buttons(False)
-        if verification_code:
-            self.log("Submitting verification code...")
-            self._set_detector("INFO", "Submitting verification code...")
-        else:
-            self.log("Logging in...")
-            self._set_detector("INFO", "Trying to login...")
-
-        def work() -> None:
-            try:
-                self.service.login(username, password, verification_code=verification_code)
-            except VerificationCodeRequired as exc:
-                self.root.after(0, lambda: self._on_verification_code_required(username, password, str(exc)))
-                return
-            except InstagramServiceError as exc:
-                self.root.after(0, lambda: self._on_login_failed(str(exc)))
-                return
-            self.root.after(0, self._on_login_success)
-
-        self._run_async(work)
-
-    def _on_verification_code_required(self, username: str, password: str, message: str) -> None:
-        self._set_login_buttons(True)
-        self.log(message)
-        self._set_detector("WARNING", "Instagram requested an activation/verification code.")
-        code = simpledialog.askstring(
-            APP_TITLE,
-            "Instagram طلب كود تفعيل.\nInstagram requested a verification code.\n\nEnter the code:",
-            parent=self.root,
-        )
-        if not code:
-            self.log("Verification code entry canceled by user.")
-            self._set_detector("WARNING", "Verification code required. Login canceled.")
-            return
-        self._start_login_flow(username, password, verification_code=code.strip())
-
-    def _on_login_success(self) -> None:
+    def _on_login_success(self, auto_scan: bool = False) -> None:
         self._set_login_buttons(True)
         self._set_action_buttons(True)
         self.log("Login successful.")
-        self._set_detector("SUCCESS", "Login successful. Session is active.")
-        messagebox.showinfo(APP_TITLE, "Login successful.")
+        if auto_scan:
+            self._set_detector("INFO", "Login successful. Starting account scan automatically...")
+            self.fetch_non_followers()
+        else:
+            self._set_detector("SUCCESS", "Login successful. Session is active.")
 
     def _on_login_failed(self, error_text: str) -> None:
         self._set_login_buttons(True)
@@ -315,7 +255,7 @@ class InstagramCleanerApp:
             except InstagramServiceError as exc:
                 self.root.after(0, lambda: self._on_login_failed(str(exc)))
                 return
-            self.root.after(0, self._on_login_success)
+            self.root.after(0, lambda: self._on_login_success(auto_scan=True))
 
         self._run_async(work)
 
