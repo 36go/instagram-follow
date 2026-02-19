@@ -1,4 +1,4 @@
-# Release v1.0.2
+# Release v1.0.3
 
 ## Added
 - Desktop GUI app to login to Instagram.
@@ -9,11 +9,13 @@
 - Visible Chrome login mode using `undetected-chromedriver + selenium`.
 - Session import from browser login to continue actions in the app.
 - Login error detector enhancements for captcha/challenge/rate-limit cases.
+- In-app verification code prompt when Instagram requests activation/2FA code.
 
 ## Changed
 - Updated README to include both English and Arabic documentation.
 - Updated license to proprietary copyright terms for `@pj.cy`.
 - Release package now includes `LICENSE`.
+- Clarified that Chrome login is optional and used only when needed.
 
 ## Artifacts
 - `InstagramCleaner.exe`

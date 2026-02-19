@@ -3,9 +3,9 @@ from datetime import datetime
 from pathlib import Path
 import sys
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, simpledialog, ttk
 
-from instagram_service import InstagramService, InstagramServiceError
+from instagram_service import InstagramService, InstagramServiceError, VerificationCodeRequired
 
 
 APP_TITLE = "Instagram Cleaner"
@@ -247,19 +247,44 @@ class InstagramCleanerApp:
             messagebox.showerror(APP_TITLE, "Please enter username and password.")
             return
 
+        self._start_login_flow(username, password)
+
+    def _start_login_flow(self, username: str, password: str, verification_code: str = "") -> None:
         self._set_login_buttons(False)
-        self.log("Logging in...")
-        self._set_detector("INFO", "Trying to login...")
+        if verification_code:
+            self.log("Submitting verification code...")
+            self._set_detector("INFO", "Submitting verification code...")
+        else:
+            self.log("Logging in...")
+            self._set_detector("INFO", "Trying to login...")
 
         def work() -> None:
             try:
-                self.service.login(username, password)
+                self.service.login(username, password, verification_code=verification_code)
+            except VerificationCodeRequired as exc:
+                self.root.after(0, lambda: self._on_verification_code_required(username, password, str(exc)))
+                return
             except InstagramServiceError as exc:
                 self.root.after(0, lambda: self._on_login_failed(str(exc)))
                 return
             self.root.after(0, self._on_login_success)
 
         self._run_async(work)
+
+    def _on_verification_code_required(self, username: str, password: str, message: str) -> None:
+        self._set_login_buttons(True)
+        self.log(message)
+        self._set_detector("WARNING", "Instagram requested an activation/verification code.")
+        code = simpledialog.askstring(
+            APP_TITLE,
+            "Instagram طلب كود تفعيل.\nInstagram requested a verification code.\n\nEnter the code:",
+            parent=self.root,
+        )
+        if not code:
+            self.log("Verification code entry canceled by user.")
+            self._set_detector("WARNING", "Verification code required. Login canceled.")
+            return
+        self._start_login_flow(username, password, verification_code=code.strip())
 
     def _on_login_success(self) -> None:
         self._set_login_buttons(True)

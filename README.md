@@ -4,7 +4,7 @@
 
 ## English
 Desktop app to manage Instagram follow cleanup:
-- Login with API (`instagrapi`) or visible Chrome automation (`undetected-chromedriver + selenium`).
+- Login with API (`instagrapi`) by default, or use visible Chrome automation (`undetected-chromedriver + selenium`) when needed.
 - Detect accounts you follow that do not follow you back.
 - Unfollow selected users or all listed users.
 - Built-in error detector for login/challenge/rate-limit messages.
@@ -12,7 +12,9 @@ Desktop app to manage Instagram follow cleanup:
 ### Chrome Requirement
 - Google Chrome must be installed.
 - Chrome language can be English or Arabic.
+- `Chrome Login` is optional, not mandatory.
 - If Instagram shows "Are you a robot?" use `Chrome Login` in the app and complete the challenge manually in the opened browser.
+- If Instagram requests a verification/activation code, the app now prompts you to enter the code directly.
 
 ### Project Files
 - `app.py`: GUI application.
@@ -44,17 +46,17 @@ Output:
 
 ### Create Release Package
 ```powershell
-New-Item -ItemType Directory -Force -Path release\v1.0.1 | Out-Null
-Copy-Item dist\InstagramCleaner.exe release\v1.0.1\InstagramCleaner.exe -Force
-Copy-Item README.md release\v1.0.1\README.md -Force
-Copy-Item RELEASE_NOTES.md release\v1.0.1\RELEASE_NOTES.md -Force
-Copy-Item LICENSE release\v1.0.1\LICENSE -Force
-Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleaner-v1.0.1.zip -Force
+New-Item -ItemType Directory -Force -Path release\v1.0.3 | Out-Null
+Copy-Item dist\InstagramCleaner.exe release\v1.0.3\InstagramCleaner.exe -Force
+Copy-Item README.md release\v1.0.3\README.md -Force
+Copy-Item RELEASE_NOTES.md release\v1.0.3\RELEASE_NOTES.md -Force
+Copy-Item LICENSE release\v1.0.3\LICENSE -Force
+Compress-Archive -Path release\v1.0.3\* -DestinationPath release\InstagramCleaner-v1.0.3.zip -Force
 ```
 
 ## العربية
 تطبيق سطح مكتب لإدارة تنظيف المتابعات في إنستغرام:
-- تسجيل دخول عبر API (`instagrapi`) أو عبر كروم ظاهر (`undetected-chromedriver + selenium`).
+- تسجيل دخول أساسي عبر API (`instagrapi`)، ومع خيار إضافي عبر كروم ظاهر (`undetected-chromedriver + selenium`) عند الحاجة.
 - اكتشاف الحسابات التي تتابعها ولا تتابعك.
 - إلغاء متابعة حسابات محددة أو كل القائمة.
 - كاشف أخطاء داخل التطبيق يوضح حالة تسجيل الدخول والتحديات.
@@ -62,7 +64,9 @@ Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleane
 ### متطلب كروم
 - لازم يكون Google Chrome مثبت.
 - لغة كروم ممكن تكون عربي أو إنجليزي.
+- `Chrome Login` خيار إضافي وليس إجباري.
 - إذا ظهر لك "Are you a robot?" استخدم زر `Chrome Login` داخل التطبيق وكمل التحقق يدويًا داخل المتصفح المفتوح.
+- إذا طلب إنستغرام كود تفعيل/تحقق، التطبيق سيطلب منك إدخال الكود مباشرة.
 
 ### ملفات المشروع
 - `app.py`: واجهة التطبيق.
@@ -94,12 +98,12 @@ python app.py
 
 ### تجهيز ملف Release
 ```powershell
-New-Item -ItemType Directory -Force -Path release\v1.0.1 | Out-Null
-Copy-Item dist\InstagramCleaner.exe release\v1.0.1\InstagramCleaner.exe -Force
-Copy-Item README.md release\v1.0.1\README.md -Force
-Copy-Item RELEASE_NOTES.md release\v1.0.1\RELEASE_NOTES.md -Force
-Copy-Item LICENSE release\v1.0.1\LICENSE -Force
-Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleaner-v1.0.1.zip -Force
+New-Item -ItemType Directory -Force -Path release\v1.0.3 | Out-Null
+Copy-Item dist\InstagramCleaner.exe release\v1.0.3\InstagramCleaner.exe -Force
+Copy-Item README.md release\v1.0.3\README.md -Force
+Copy-Item RELEASE_NOTES.md release\v1.0.3\RELEASE_NOTES.md -Force
+Copy-Item LICENSE release\v1.0.3\LICENSE -Force
+Compress-Archive -Path release\v1.0.3\* -DestinationPath release\InstagramCleaner-v1.0.3.zip -Force
 ```
 
 ## Notes

@@ -28,6 +28,10 @@ class InstagramServiceError(Exception):
     """Raised when an Instagram operation fails."""
 
 
+class VerificationCodeRequired(InstagramServiceError):
+    """Raised when Instagram asks for a 2FA/verification code."""
+
+
 ProgressCallback = Callable[[int, int, str, bool, str], None]
 
 
@@ -37,16 +41,17 @@ class InstagramService:
         self.session_path = Path(session_path)
         self.is_logged_in = False
 
-    def login(self, username: str, password: str) -> None:
+    def login(self, username: str, password: str, verification_code: str = "") -> None:
         username = username.strip().lstrip("@")
         password = password.strip()
+        verification_code = verification_code.strip()
         if not username or not password:
             raise InstagramServiceError("Username and password are required.")
 
         self._load_session_settings()
 
         try:
-            logged_in = self.client.login(username, password)
+            logged_in = self.client.login(username, password, verification_code=verification_code)
         except BadPassword as exc:
             raise InstagramServiceError("Wrong password.") from exc
         except (CaptchaChallengeRequired, RecaptchaChallengeForm) as exc:
@@ -55,8 +60,12 @@ class InstagramService:
                 "Open Instagram app/site, complete verification, then try login again."
             ) from exc
         except TwoFactorRequired as exc:
+            if not verification_code:
+                raise VerificationCodeRequired(
+                    "Instagram requested a verification code (2FA)."
+                ) from exc
             raise InstagramServiceError(
-                "Two-factor authentication is enabled. This simple build does not support 2FA yet."
+                "Verification code is incorrect or expired. Please try again."
             ) from exc
         except ChallengeRequired as exc:
             raise InstagramServiceError(
