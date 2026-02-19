@@ -17,6 +17,7 @@ class InstagramCleanerApp:
         self.root.title(APP_TITLE)
         self.root.geometry("920x620")
         self.root.minsize(820, 560)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.service = InstagramService("session.json")
         self.non_followers: list[str] = []
@@ -371,6 +372,13 @@ class InstagramCleanerApp:
             messagebox.showerror(APP_TITLE, "Delay must be at least 0.5 seconds.")
             return None
         return delay
+
+    def on_close(self) -> None:
+        try:
+            self.service.close_browser()
+        except Exception:
+            pass
+        self.root.destroy()
 
 
 def main() -> None:

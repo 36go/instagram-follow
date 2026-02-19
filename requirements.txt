@@ -1,4 +1,3 @@
-instagrapi
 pyinstaller
 selenium
 undetected-chromedriver
