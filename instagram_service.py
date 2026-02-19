@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import time
 from pathlib import Path
 from typing import Callable
+try:
+    import winreg
+except ImportError:  # pragma: no cover
+    winreg = None
 
 from instagrapi import Client
 from instagrapi.exceptions import (
@@ -89,7 +95,15 @@ class InstagramService:
             options.add_argument("--start-maximized")
             options.add_argument("--disable-notifications")
             options.add_argument("--lang=en-US")
-            driver = uc.Chrome(options=options, use_subprocess=True)
+            chrome_path = self._find_chrome_binary()
+            if not chrome_path:
+                raise InstagramServiceError(
+                    "Google Chrome was not found. Install Chrome or set CHROME_PATH to chrome.exe."
+                )
+            driver_kwargs = {"options": options, "use_subprocess": True}
+            # Selenium requires binary path to be a plain string.
+            driver_kwargs["browser_executable_path"] = str(chrome_path)
+            driver = uc.Chrome(**driver_kwargs)
             driver.get("https://www.instagram.com/accounts/login/")
 
             if username:
@@ -207,6 +221,11 @@ class InstagramService:
             self.session_path.unlink(missing_ok=True)
 
     def _wrap_instagram_error(self, exc: Exception, prefix: str) -> InstagramServiceError:
+        if "binary location must be a string" in str(exc).lower():
+            return InstagramServiceError(
+                f"{prefix}: Chrome binary path issue detected. "
+                "Reinstall/update Google Chrome, then retry."
+            )
         if isinstance(exc, WebDriverException):
             return InstagramServiceError(
                 f"{prefix}: Could not start Chrome automation. "
@@ -239,3 +258,57 @@ class InstagramService:
         raise InstagramServiceError(
             "Browser login timeout. Complete login/challenge in Chrome, then retry."
         )
+
+    def _find_chrome_binary(self) -> str | None:
+        for env_name in ("CHROME_PATH", "CHROME_BIN"):
+            env_path = os.environ.get(env_name, "").strip().strip('"')
+            if env_path and Path(env_path).exists():
+                return str(Path(env_path))
+
+        registry_paths = self._find_chrome_from_registry()
+        if registry_paths:
+            return registry_paths
+
+        candidates = [
+            Path(os.environ.get("PROGRAMFILES", "")) / "Google/Chrome/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Google/Chrome/Application/chrome.exe",
+            Path(os.environ.get("LOCALAPPDATA", "")) / "Google/Chrome/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES", "")) / "Google/Chrome Beta/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Google/Chrome Beta/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES", "")) / "Google/Chrome Dev/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Google/Chrome Dev/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES", "")) / "Google/Chrome SxS/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Google/Chrome SxS/Application/chrome.exe",
+        ]
+
+        for path in candidates:
+            if str(path) and path.exists():
+                return str(path)
+
+        for command_name in ("chrome.exe", "chrome", "google-chrome", "google-chrome-stable"):
+            found = shutil.which(command_name)
+            if found:
+                return str(found)
+
+        return None
+
+    def _find_chrome_from_registry(self) -> str | None:
+        if winreg is None:
+            return None
+
+        keys = [
+            (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe"),
+            (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe"),
+            (winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe"),
+        ]
+
+        for hive, subkey in keys:
+            try:
+                with winreg.OpenKey(hive, subkey) as key:
+                    value, _ = winreg.QueryValueEx(key, None)
+                    if value and Path(value).exists():
+                        return str(Path(value))
+            except OSError:
+                continue
+
+        return None
