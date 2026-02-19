@@ -17,8 +17,6 @@ Desktop app that logs into Instagram, checks accounts you follow that do not fol
 - `app.py`: GUI application.
 - `instagram_service.py`: Instagram API logic using `instagrapi`.
 - `build_exe.bat`: Build EXE.
-- `make_release.ps1`: Prepare release folder + zip.
-- `publish_release.ps1`: Publish release via GitHub CLI.
 - `RELEASE_NOTES.md`: Release notes.
 - `LICENSE`: Proprietary license.
 
@@ -47,7 +45,12 @@ EXE output:
 
 ### Create Release Package
 ```powershell
-.\make_release.ps1 -Version v1.0.1
+New-Item -ItemType Directory -Force -Path release\v1.0.1 | Out-Null
+Copy-Item dist\InstagramCleaner.exe release\v1.0.1\InstagramCleaner.exe -Force
+Copy-Item README.md release\v1.0.1\README.md -Force
+Copy-Item RELEASE_NOTES.md release\v1.0.1\RELEASE_NOTES.md -Force
+Copy-Item LICENSE release\v1.0.1\LICENSE -Force
+Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleaner-v1.0.1.zip -Force
 ```
 
 Release output:
@@ -75,8 +78,6 @@ Release output:
 - `app.py`: واجهة التطبيق.
 - `instagram_service.py`: منطق التعامل مع Instagram API باستخدام `instagrapi`.
 - `build_exe.bat`: بناء ملف EXE.
-- `make_release.ps1`: تجهيز مجلد الإصدار وملف ZIP.
-- `publish_release.ps1`: نشر الإصدار عبر GitHub CLI.
 - `RELEASE_NOTES.md`: ملاحظات الإصدار.
 - `LICENSE`: ترخيص ملكية خاصة.
 
@@ -105,7 +106,12 @@ python app.py
 
 ### إنشاء حزمة إصدار
 ```powershell
-.\make_release.ps1 -Version v1.0.1
+New-Item -ItemType Directory -Force -Path release\v1.0.1 | Out-Null
+Copy-Item dist\InstagramCleaner.exe release\v1.0.1\InstagramCleaner.exe -Force
+Copy-Item README.md release\v1.0.1\README.md -Force
+Copy-Item RELEASE_NOTES.md release\v1.0.1\RELEASE_NOTES.md -Force
+Copy-Item LICENSE release\v1.0.1\LICENSE -Force
+Compress-Archive -Path release\v1.0.1\* -DestinationPath release\InstagramCleaner-v1.0.1.zip -Force
 ```
 
 ناتج الإصدار:
