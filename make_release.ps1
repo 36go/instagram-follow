@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "v1.0.0"
+    [string]$Version = "v1.0.1"
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,6 +18,7 @@ New-Item -Path $releaseDir -ItemType Directory -Force | Out-Null
 Copy-Item $exePath (Join-Path $releaseDir "InstagramCleaner.exe") -Force
 Copy-Item (Join-Path $root "README.md") $releaseDir -Force
 Copy-Item (Join-Path $root "RELEASE_NOTES.md") $releaseDir -Force
+Copy-Item (Join-Path $root "LICENSE") $releaseDir -Force
 
 if (Test-Path $zipPath) {
     Remove-Item $zipPath -Force

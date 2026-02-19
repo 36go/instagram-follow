@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Repo,
-    [string]$Version = "v1.0.0"
+    [string]$Version = "v1.0.1"
 )
 
 $ErrorActionPreference = "Stop"
